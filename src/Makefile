@@ -3,7 +3,7 @@ STD=-std=c11 -pedantic
 CFLAGS=-Wall -W 
 
 SERVER_NAME=command-server
-SERVER_OBJ= server.o
+SERVER_OBJ= server.o netwerking.o
 CLI_NAME=control-shell
 
 all: $(SERVER_NAME)

@@ -1,15 +1,15 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/socket.h>         // for socket(), bind(), connect()
+#include <sys/socket.h>         // for socket(), bind(), connect(), close()
 #include <arpa/inet.h>          // for sockaddr_in and inet_ntoa()
+#include <unistd.h>
 
 #include "netwerking.h"
 
 
-//initTcpServer(const char *addr, int port, const char *source_addr, int flags){
 int initTcpServer(int port){
-        // Initialize the socket connection in here. Too tired tonight
+        
         int fd = socket(AF_INET, SOCK_STREAM, 0);
         if (fd < 0)
                 perror("ERROR opening socket");
@@ -24,14 +24,24 @@ int initTcpServer(int port){
         serv_addr.sin_addr.s_addr = INADDR_ANY;
         serv_addr.sin_port = htons(port);
 
-        if (bind(fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
-                perror("ERROR bind");
-
-        //netListen()
-        if (listen(fd, 64) < 0)
-                perror("ERROR listen");
+        if (netListen(fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == NET_ERR)
+                fd = NET_ERR;
 
         return fd;
+}
+
+int netListen(int s, struct sockaddr *sa, socklen_t len){
+        if (bind(s, sa, len) == -1){
+                close(s);
+                return NET_ERR;
+        }
+
+        if (listen(s, 64) == -1){
+                close(s);
+                return NET_ERR;
+        }
+
+        return NET_OK;
 }
 
 int netSetBlock(char *err, int fd, int non_block){

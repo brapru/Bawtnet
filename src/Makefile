@@ -1,5 +1,5 @@
 
-STD=-std=c11 -pedantic 
+STD=-std=c17 -pedantic 
 CFLAGS=-Wall -W 
 
 SERVER_NAME=command-server

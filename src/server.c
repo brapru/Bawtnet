@@ -12,18 +12,23 @@
 /* Global Vars */
 struct commandServer server; /* Server global state  */
 
+/* Admittedly it is overkill and probably way too overly complicated. Mayble will clean up later, but it's fun?  */
 void asciiArt(void){
-#include "asciilogo.h"
+#include "asciilogo2.h"
 
         char *buf = malloc(1024*16);
 
         snprintf(buf, 1024*16, ascii_logo, 
                 KRED, 
                 KNRM, KRED, 
+                KGRAY, KNRM, KRED, KNRM, KRED, 
+                KGRAY, KNRM, KRED, KNRM, KGRAY, KYEL, KNRM, KRED, 
+                KGRAY, KNRM, KRED, KNRM, KGRAY, KYEL, KNRM, KRED, 
+                KGRAY, KYEL,
+                KGRAY, KYEL, KNRM, KRED, (long) getpid(),
+                KGRAY, KYEL,
                 KNRM, KRED, server.cli_port,
-                KNRM, KRED, 
-                KNRM, KRED, (long) getpid(),
-                KNRM
+                KGRAY, KYEL, KNRM 
         );
   
         printf("%s", buf);

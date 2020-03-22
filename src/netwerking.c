@@ -70,3 +70,14 @@ int netNonBlock(char *err, int fd){
 int netBlock(char *err, int fd){
         return netSetBlock(err, fd, 0);
 }
+
+int netAcceptTcp(int fd){
+
+        int client;
+        struct sockaddr_in address;  
+        socklen_t address_len = sizeof(address);
+
+        client = accept(fd, (struct sockaddr*)&address, &address_len);
+
+        return client;
+}

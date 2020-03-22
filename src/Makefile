@@ -1,9 +1,9 @@
 
 STD=-std=c17 -pedantic 
-CFLAGS=-Wall -W 
+CFLAGS=-Wall -W -g 
 
 SERVER_NAME=command-server
-SERVER_OBJ= server.o netwerking.o
+SERVER_OBJ= server.o netwerking.o event.o
 CLI_NAME=control-shell
 
 all: $(SERVER_NAME)

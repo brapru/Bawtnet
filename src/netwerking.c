@@ -72,7 +72,6 @@ int netBlock(char *err, int fd){
 }
 
 int netAcceptTcp(int fd){
-
         int client;
         struct sockaddr_in address;  
         socklen_t address_len = sizeof(address);
@@ -80,4 +79,14 @@ int netAcceptTcp(int fd){
         client = accept(fd, (struct sockaddr*)&address, &address_len);
 
         return client;
+}
+
+void netRead(int fd){
+        char buff[1024];
+        
+        if (read(fd, buff, 1024) < 0){
+                perror("recv");
+        }
+        
+        printf("Received: %s\n", buff);
 }

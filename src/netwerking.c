@@ -84,9 +84,8 @@ int netAcceptTcp(int fd){
 void netRead(int fd){
         char buff[1024];
         
-        if (read(fd, buff, 1024) < 0){
+        if (read(fd, buff, 1024) < 0)
                 perror("recv");
-        }
         
         printf("Received: %s\n", buff);
 }

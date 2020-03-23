@@ -9,20 +9,14 @@
 struct eventLoop *createEpollEventLoop(){
         
         struct eventLoop *event_loop = malloc(sizeof(struct eventLoop));
-        if (event_loop == NULL)
-                goto err;
-
+        if (event_loop == NULL) goto err;
         event_loop->data = malloc(sizeof(*(event_loop->data)));
-        if (event_loop->data == NULL)
-                goto err;
+        if (event_loop->data == NULL) goto err;
 
         struct tempState *state = malloc(sizeof(struct tempState)); 
-        if (state == NULL)
-                goto err;
-                       
+        if (state == NULL) goto err;
         state->events = malloc(sizeof(struct epoll_event) * MAX_EVENTS);
-        if (!state->events)
-                goto err;
+        if (!state->events) goto err;
 
         state->epfd = epollCreate();
         event_loop->data = state;
@@ -30,7 +24,7 @@ struct eventLoop *createEpollEventLoop(){
         return event_loop;
 
 err:
-        if (event_loop) {
+        if (event_loop){
                 free(event_loop->data);
                 free(event_loop);
         }
@@ -44,10 +38,8 @@ int addEpollEvent(struct eventLoop *event_loop, int sockfd, int mask) {
         struct epoll_event ee;
         
         ee.events = 0;
-        if (mask & EVENT_READ)
-                ee.events |= EPOLLIN; 
-        if (mask & EVENT_WRITE)
-                ee.events |= EPOLLOUT;
+        if (mask & EVENT_READ) ee.events |= EPOLLIN; 
+        if (mask & EVENT_WRITE) ee.events |= EPOLLOUT;
 
         ee.data.fd = sockfd;
         

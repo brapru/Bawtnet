@@ -70,13 +70,13 @@ void initServer(void){
         /* Add client socket fd to epoll - handle connecting cli clients */
         int j;
         for(j=0; j < server.clifd_count; j++) {
-               if (addEpollEvent(server.event_loop, server.clifd[j], EVENT_READ) == EVENT_ERR)                  
+               if (addEpollEvent(server.event_loop, server.clifd[j], EVENT_READ, handleAcceptTcp) == EVENT_ERR)                  
                         perror("createEpollFileEvent");
         }
         
         /* Add victim socket fd to epoll - handle connecting victim clients */
         for(j=0; j < server.victimfd_count; j++) {
-               if (addEpollEvent(server.event_loop, server.victimfd[j], EVENT_READ) == EVENT_ERR)                  
+               if (addEpollEvent(server.event_loop, server.victimfd[j], EVENT_READ, handleAcceptTcp) == EVENT_ERR)                  
                         perror("createEpollFileEvent");
         }
 
@@ -89,8 +89,9 @@ int main(void){
         initServer();
         asciiArt();
 
-        // Main Event Loop
-        eventMain(server.event_loop, server.victimfd[0]);
-        
+        eventMain(server.event_loop);
+       
+        // delete eventloop & cleanup memory
+
         return 0;
 }

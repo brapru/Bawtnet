@@ -21,7 +21,7 @@ struct commandServer {
         int victimfd_count;
         
         // Develop out to data structure
-        int event_loop;        
+        struct eventLoop *event_loop;        
 
         char neterr[NET_ERR_LEN];
 };

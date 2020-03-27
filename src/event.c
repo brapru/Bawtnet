@@ -11,14 +11,14 @@ struct eventLoop *createEpollEventLoop(){
         if (event_loop == NULL) goto err;
         
         event_loop->data = malloc(sizeof(*(event_loop->data)));
-        event_loop->events = malloc(sizeof(struct eventCallback) * MAX_EVENTS);
-        event_loop->ready = malloc(sizeof(struct readyEvents) * MAX_EVENTS);
+        event_loop->events = malloc(sizeof(struct eventCallback)*10128);
+        event_loop->ready = malloc(sizeof(struct readyEvents)*10128);
         if (event_loop->data == NULL || event_loop->events == NULL || event_loop ->ready == NULL) goto err;
 
         struct tempState *state = malloc(sizeof(struct tempState)); 
         if (state == NULL) goto err;
         
-        state->events = malloc(sizeof(struct epoll_event) * MAX_EVENTS);
+        state->events = malloc(sizeof(struct epoll_event)*10128);
         if (!state->events) goto err;
 
         state->epfd = epollCreate();
@@ -47,19 +47,26 @@ int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *fun
                 ee.events |= EPOLLIN; 
         if (mask & EVENT_WRITE) 
                 ee.events |= EPOLLOUT;
+        //if (mask & EVENT_RW)
+        //      ee.events = EPOLLIN|EPOLLOUT;
 
         ee.data.fd = fd;
         
-        if (epoll_ctl(state->epfd, EPOLL_CTL_ADD, fd, &ee) < 0)
+        if (epoll_ctl(state->epfd, EPOLL_CTL_ADD, fd, &ee) < 0){
                 perror("epoll_ctl");
-
+                exit(1);
+        }
         struct eventCallback *event = &event_loop->events[fd];
         
         if (mask & EVENT_READ) 
                 event->rfunc = func;
         if (mask & EVENT_WRITE) 
                 event->wfunc = func;
-        
+        //if (mask & EVENT_RW){
+        //        event->rfunc = func;
+        //        event->wfunc = func;
+        //}
+
         return EVENT_OK;
 }
 
@@ -77,8 +84,8 @@ int processEvents(struct eventLoop *event_loop){
                 struct eventCallback *callback = &event_loop->events[fd];  
         
                 /* Call the read functions first  */
-                if (mask & EVENT_READ)
-                        if (callback->rfunc != callback->wfunc){
+                if (mask & EVENT_READ){
+                        //if (callback->rfunc != callback->wfunc){
                                 callback->rfunc(event_loop, fd, mask);
                                 called++;
                         }
@@ -118,14 +125,16 @@ int epollWait(struct eventLoop *event_loop){
 
         numevents = epoll_wait(state->epfd, state->events, MAX_EVENTS, -1); 
          
-        if (numevents < 0)
+        if (numevents < 0){
                 perror("epoll_wait");
+                exit(1);
+        }
 
         for (i = 0; i < numevents; i++){
                 struct epoll_event *e = state->events+i;
                 int mask;
-                if (e->events & EPOLLIN) mask |= EVENT_READ;
-                if (e->events & EPOLLOUT) mask |= EVENT_WRITE;
+                if (e->events & EPOLLIN) mask = EVENT_READ;
+                if (e->events & EPOLLOUT) mask = EVENT_WRITE;
                 
                 event_loop->ready[i].fd = e->data.fd;
                 event_loop->ready[i].mask = mask;

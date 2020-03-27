@@ -5,6 +5,7 @@
 
 #include "netwerking.h"
 #include "event.h"
+#include "list.h"
 
 #define DEFAULT_CLI_PORT 6000
 #define DEFAULT_VICTIM_PORT 6001
@@ -20,10 +21,15 @@ struct commandServer {
         int victimfd[MAX_BIND]; /* Victim TCP Socket file descriptors*/
         int victimfd_count;
         
-        // Develop out to data structure
         struct eventLoop *event_loop;        
+
+        struct list *victims;
 
         char neterr[NET_ERR_LEN];
 };
+
+/* === Externs ===  */
+
+extern struct commandServer server;
 
 #endif

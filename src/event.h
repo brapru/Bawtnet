@@ -7,8 +7,9 @@
 #define EVENT_ERR -1
 #define EVENT_READ 1
 #define EVENT_WRITE 2
+#define EVENT_RW 3
 
-#define MAX_EVENTS 10
+#define MAX_EVENTS 100
 
 /* === Typedefs and Structs === */
 struct eventLoop;

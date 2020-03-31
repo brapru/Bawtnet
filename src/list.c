@@ -32,6 +32,10 @@ struct list *addNodeToList(struct list *list, void *data){
         return list;
 }
 
+struct listNode *listFirst(struct list *list){
+        return list->head;
+}
+
 struct listNode *listLast(struct list *list){
         return list->tail;
 }

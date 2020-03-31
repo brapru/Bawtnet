@@ -7,7 +7,6 @@
 #include <unistd.h>
 
 #include "netwerking.h"
-//#include "server.h"
 
 #define UNUSED(X) (void)(X);
 
@@ -66,12 +65,7 @@ void handleVictimAccept(struct eventLoop *event_loop, int fd, int mask, void *cl
        
         connSetReadHandler(conn, readDataFromClient); 
         
-        // createClient() here. In this, connection gets added to the
-        // event_loop fd. Adds the conn->fd via epoll_eventctl, with callback
-        // funcs to connection->ae_handler? If not ae_handler, then read/write
-        // handlers. Also gets added to the linked list of victims.
-        //struct client *victim = createClient(conn);
-        //struct client *victim = createClient(fd);
+        struct client *victim = createClient(conn);
 }
 
 /* === Client Handler and Functions  ===  */
@@ -79,13 +73,12 @@ void handleVictimAccept(struct eventLoop *event_loop, int fd, int mask, void *cl
 struct client *createClient(struct connection *conn){
         struct client *c = malloc(sizeof(struct client));
         if (c == NULL) return NULL;
+        
+        c->cmd = malloc(sizeof(*(c->cmd)));
+        if (c->cmd == NULL) return NULL;
 
         if (conn)
-                // set connection to nonblocking
-                // connNonBlock();
-                //
-                // call addEpollEvent, and set the callback function to the "Read Data From Clients" function
-                // connSetReadHandler(conn);
+                connSetReadHandler(conn, readDataFromClient);
 
         c->fd = conn->fd;
 
@@ -97,7 +90,7 @@ struct client *createClient(struct connection *conn){
 
 void linkList(struct list *list, struct client *c){
         addNodeToList(list, c);
-        c->client_list_node = listLast(list);
+        c->client_list_node = listFirst(list);
 }
 
 /* === Linux sys/socket Functions === */

@@ -3,9 +3,10 @@
 
 #include <unistd.h>
 
-#include "netwerking.h"
+#include "conn.h"
 #include "event.h"
 #include "list.h"
+#include "netwerking.h"
 
 #define DEFAULT_CLI_PORT 6000
 #define DEFAULT_VICTIM_PORT 6001
@@ -25,7 +26,7 @@ struct commandServer {
 
         struct list *victims;
 
-        char neterr[NET_ERR_LEN];
+        //char neterr[NET_ERR_LEN];
 };
 
 /* === Externs ===  */

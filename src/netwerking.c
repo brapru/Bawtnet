@@ -1,12 +1,13 @@
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>         // for socket(), bind(), connect(), close()
 #include <arpa/inet.h>          // for sockaddr_in and inet_ntoa()
 #include <unistd.h>
 
 #include "netwerking.h"
-#include "server.h"
+//#include "server.h"
 
 #define UNUSED(X) (void)(X);
 
@@ -34,48 +35,48 @@ int initTcpServer(int port){
         return fd;
 }
 
-void handleCliAccept(struct eventLoop *event_loop, int fd, int mask){
+void handleCliAccept(struct eventLoop *event_loop, int fd, int mask, void *clientData){
         UNUSED(event_loop);
         UNUSED(mask);
+        UNUSED(clientData);
         
         struct sockaddr_in address;  
         socklen_t address_len = sizeof(address);
 
-        int conn = netAccept(fd, (struct sockaddr*)&address, &address_len);
-        netNonBlock(NULL, conn); 
+        int clientfd = netAccept(fd, (struct sockaddr*)&address, &address_len);
+        netNonBlock(NULL, clientfd); 
         printf("New CLI Client connected\n");
 
-        connCreateConnection(event_loop, conn, EVENT_READ);
+        //connCreateConnection(clientfd);
 }
 
-void handleVictimAccept(struct eventLoop *event_loop, int fd, int mask){
+void handleVictimAccept(struct eventLoop *event_loop, int fd, int mask, void *clientData){
         UNUSED(event_loop);
         UNUSED(mask);
-        
+        UNUSED(clientData);
+
         struct sockaddr_in address;  
         socklen_t address_len = sizeof(address);
 
         int client_fd = netAccept(fd, (struct sockaddr*)&address, &address_len);
-        netNonBlock(NULL, conn); 
+        netNonBlock(NULL, client_fd); 
         printf("New Victim connected\n");
 
-        // struct connection *conn = connCreateConnection(client_fd);
-        connCreateConnection(event_loop, client_fd, EVENT_READ);
-        // Create the connection with the conn file descriptor. Creates a conn
-        // struct, which includes the different connection read and write
-        // function pointer callbacks.
+        struct connection *conn = connCreateConnection(client_fd);
+       
+        connSetReadHandler(conn, readDataFromClient); 
         
         // createClient() here. In this, connection gets added to the
         // event_loop fd. Adds the conn->fd via epoll_eventctl, with callback
         // funcs to connection->ae_handler? If not ae_handler, then read/write
         // handlers. Also gets added to the linked list of victims.
         //struct client *victim = createClient(conn);
-        struct client *victim = createClient(fd);
+        //struct client *victim = createClient(fd);
 }
 
 /* === Client Handler and Functions  ===  */
 //struct client *createClient(connection *conn){
-struct client *createClient(int fd){
+struct client *createClient(struct connection *conn){
         struct client *c = malloc(sizeof(struct client));
         if (c == NULL) return NULL;
 
@@ -86,8 +87,7 @@ struct client *createClient(int fd){
                 // call addEpollEvent, and set the callback function to the "Read Data From Clients" function
                 // connSetReadHandler(conn);
 
-        //c->fd = conn->fd;
-        c->fd = fd;
+        c->fd = conn->fd;
 
         // Add the new client to the linked list
         if (conn) linkList(server.victims, c);
@@ -153,16 +153,12 @@ int netAccept(int s, struct sockaddr *sa, socklen_t *len){
         return client;
 }
 
-int netRead(int fd){
+void readDataFromClient(struct connection *conn){
         char buff[1024];
+        memset(buff, 0, sizeof(buff));
         
-        bzero(buff, sizeof(buff));
-
-        int bytes = read(fd, buff, 1024);
-        
-        printf("Received: %s\n", buff);
-        
-        return bytes;
+        int bytes = connRead(conn, buff, 1024);
+        printf("Received %d bytes: %s\n", bytes, buff);        
 }
 
 void netWrite(int fd){

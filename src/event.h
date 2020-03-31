@@ -15,13 +15,14 @@
 struct eventLoop;
 
 /* Callback function pointer to temporarily store functions associated with events */ 
-typedef void eventFunc(struct eventLoop *event_loop, int fd, int mask);
+typedef void eventFunc(struct eventLoop *event_loop, int fd, int mask, void *clientData);
 
 /* The callback struct to hold a read function and a write function. Read/write
  * status is assiged in addEpollEvent */
 struct eventCallback {
         eventFunc *rfunc;
         eventFunc *wfunc;
+        void *clientData;
 };
 
 /* Used to more easily manage event_loop file descriptors, and store ready events for calling. Assigned in epollWait()  */
@@ -47,7 +48,7 @@ struct tempState {
 
 /* === Event Functions === */
 struct eventLoop *createEpollEventLoop();
-int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *func);
+int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *func, void *clientData);
 
 int epollWait(struct eventLoop *event_loop);
 int epollCreate();

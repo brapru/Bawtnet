@@ -1,8 +1,6 @@
 #ifndef __LIST_H
 #define __LIST_H
 
-#include "conn.h"
-
 struct listNode {
         void *data;
         struct listNode *next;
@@ -16,7 +14,9 @@ struct list {
 }; 
 
 struct list *createList();
-int addNodeToList(struct list *list, struct client *client);
-int delNodefromList(struct list*list, listNode *node);
+struct list *addNodeToList(struct list *list, void *node);
+int delNodefromList(struct list *list, void *node);
+struct listNode *listLast(struct list *list);
+//struct listNode *searchKeyInList(struct listNode *node);
 
 #endif

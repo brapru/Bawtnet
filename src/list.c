@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 #include "list.h"
+//#include "server.h"
 
 struct list *createList(){
         struct list *list = malloc(sizeof(struct list));
@@ -17,11 +18,11 @@ struct list *createList(){
 }
 
 // CHANGE: Append it to the end
-struct list *addNodeToList(struct list *list, struct client *client){
+struct list *addNodeToList(struct list *list, void *data){
         struct listNode *node = malloc(sizeof(struct listNode));
         if (node == NULL) return NULL;
 
-        node->data = client;
+        node->data = data;
         node->next = list->head;
         list->head = node;
         
@@ -31,5 +32,6 @@ struct list *addNodeToList(struct list *list, struct client *client){
         return list;
 }
 
-struct listNode *listLast(struct list *list);
-struct listNode *searchKeyinList(listNode *node) 
+struct listNode *listLast(struct list *list){
+        return list->tail;
+}

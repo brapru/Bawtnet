@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "event.h"
-#include "netwerking.h"
+//#include "netwerking.h"
 
 struct eventLoop *createEpollEventLoop(){
         
@@ -37,7 +37,7 @@ err:
         return NULL; 
 }
 
-int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *func) {
+int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *func, void *clientData) {
         struct tempState *state = event_loop->data;
         
         struct epoll_event ee;
@@ -47,8 +47,6 @@ int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *fun
                 ee.events |= EPOLLIN; 
         if (mask & EVENT_WRITE) 
                 ee.events |= EPOLLOUT;
-        //if (mask & EVENT_RW)
-        //      ee.events = EPOLLIN|EPOLLOUT;
 
         ee.data.fd = fd;
         
@@ -57,15 +55,12 @@ int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *fun
                 exit(1);
         }
         struct eventCallback *event = &event_loop->events[fd];
-        
+
+        event->clientData = clientData;        
         if (mask & EVENT_READ) 
                 event->rfunc = func;
         if (mask & EVENT_WRITE) 
                 event->wfunc = func;
-        //if (mask & EVENT_RW){
-        //        event->rfunc = func;
-        //        event->wfunc = func;
-        //}
 
         return EVENT_OK;
 }
@@ -86,14 +81,14 @@ int processEvents(struct eventLoop *event_loop){
                 /* Call the read functions first  */
                 if (mask & EVENT_READ){
                         //if (callback->rfunc != callback->wfunc){
-                                callback->rfunc(event_loop, fd, mask);
+                                callback->rfunc(event_loop, fd, mask, callback->clientData);
                                 called++;
                         }
                 
                 /* Call the write functions  */
                 if (mask & EVENT_WRITE)
                         if (!called || callback->wfunc != callback->rfunc){
-                                callback->wfunc(event_loop, fd, mask);
+                                callback->wfunc(event_loop, fd, mask, callback->clientData);
                                 called++;
                         }
         }        

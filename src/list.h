@@ -18,6 +18,7 @@ struct list *addNodeToList(struct list *list, void *node);
 int delNodefromList(struct list *list, void *node);
 struct listNode *listLast(struct list *list);
 struct listNode *listFirst(struct list *list);
+
 //struct listNode *searchKeyInList(struct listNode *node);
 
 #endif

@@ -18,6 +18,7 @@ struct ConnectionType {
         int (*read)(struct connection *conn, void *buff, size_t bufflen);
         int (*set_read_handler)(struct connection *conn, ConnectionCallbackFunc func);
         int (*set_write_handler)(struct connection *conn, ConnectionCallbackFunc func);
+        int (*set_handlers)(struct connection *conn, ConnectionCallbackFunc read_func, ConnectionCallbackFunc write_func);
 };
 
 struct connection {
@@ -26,11 +27,15 @@ struct connection {
         ConnectionCallbackFunc read_handler;
         ConnectionCallbackFunc write_handler;
         void *clientData;
+        void *priv_data;
 };
 
 struct connection *connCreateConnection(int fd);
 void connHandleData(struct eventLoop *event_loop, int fd, int mask);
 void connEventHandler(struct eventLoop *event_loop, int fd, int mask, void *clientData);
+
+void connSetPrivData(struct connection *conn, void *data);
+void *connGetPrivData(struct connection *conn);
 
 /* === ConnectionType Functions ===  */
 
@@ -48,6 +53,10 @@ static int connSetReadHandler(struct connection *conn, ConnectionCallbackFunc fu
 
 static int connSetWriteHandler(struct connection *conn, ConnectionCallbackFunc func){
         return conn->type->set_write_handler(conn, func);
+}
+
+static int connSetHandlers(struct connection *conn, ConnectionCallbackFunc read_func, ConnectionCallbackFunc write_func){
+        return conn->type->set_handlers(conn, read_func, write_func);
 }
 
 #endif

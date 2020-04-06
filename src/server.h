@@ -25,7 +25,7 @@ struct commandServer {
         struct eventLoop *event_loop;        
 
         struct list *victims;
-
+        struct list *cli;
         //char neterr[NET_ERR_LEN];
 };
 

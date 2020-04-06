@@ -82,6 +82,7 @@ void initServer(void){
         }
 
         server.victims = createList();
+        server.cli = createList();
                 
 }
 

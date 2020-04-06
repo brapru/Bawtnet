@@ -21,6 +21,7 @@ struct client;
 
 struct client {
         int fd;
+        struct connection *conn;
         char *cmd;
         struct listNode *client_list_node;
 };
@@ -39,12 +40,14 @@ int netNonBlock(char *err, int fd);
 int netBlock(char *err, int fd);
 int netAccept(int s, struct sockaddr *sa, socklen_t *len);
 int netListen(int s, struct sockaddr *sa, socklen_t len);
-void readDataFromClient(struct connection *conn);
-void netWrite(int fd);
 int netClose(int fd);
 
+void readDataFromClient(struct connection *conn);
+void sendDataToClient(struct connection *conn);
+void sendToGroup(char *buff, struct list *list);
+
 /* === Client Functions === */
-struct client *createClient(struct connection *conn);
+struct client *createClient(struct connection *conn, int mask);
 void linkList(struct list *list, struct client *c);
 
 #endif

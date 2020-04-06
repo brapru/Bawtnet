@@ -43,6 +43,8 @@ int addEpollEvent(struct eventLoop *event_loop, int fd, int mask, eventFunc *fun
         struct epoll_event ee;
         
         ee.events = 0;
+        if (mask == EVENT_BOTH)
+                ee.events = EPOLLIN|EPOLLOUT;
         if (mask & EVENT_READ) 
                 ee.events |= EPOLLIN; 
         if (mask & EVENT_WRITE) 
